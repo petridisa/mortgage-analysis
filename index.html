@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mortgage Multi-Agreement Payoff & Fixed Term Comparison Calculator</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              900: '#14532d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 3px; }
+    input[type=range] { accent-color: #22c55e; }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
+
+  <!-- Header -->
+  <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-brand-500/10 rounded-xl text-brand-600 dark:text-brand-500">
+          <i class="fa-solid fa-calculator text-xl"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight">Mortgage Fixed-Term & Payoff Comparison Calculator</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Compare Fixed Terms, Reversions & Locked Extra Payments</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-2.5">
+        <button id="clearAllBtn" class="px-3 py-1.5 text-xs font-semibold rounded-xl border border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-eraser"></i> Clear All Inputs
+        </button>
+        <button id="exportCsvBtn" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-700 text-white transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-file-csv"></i> Export CSV
+        </button>
+        <button id="themeToggle" class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition ml-1">
+          <i class="fa-solid fa-moon dark:hidden"></i>
+          <i class="fa-solid fa-sun hidden dark:block"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <!-- Global Baseline Loan Settings -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-700/60 pb-3">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-brand-500"></i>
+          <h2 class="font-bold text-base text-slate-800 dark:text-slate-100">Global Loan & Evaluation Setup</h2>
+        </div>
+        
+        <!-- Enable / Disable Scenario B Toggle -->
+        <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/60">
+          <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Compare Second Scenario (Scenario B)</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="enableScenarioB" class="sr-only peer" checked>
+            <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-slate-600 peer-checked:bg-blue-500"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Initial Loan Balance -->
+        <div class="space-y-1.5 md:col-span-2">
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 flex justify-between">
+            <span>Loan Amount</span>
+            <span id="loanAmountVal" class="text-brand-600 dark:text-brand-400 font-bold">$300,000</span>
+          </label>
+          <div class="relative">
+            <span id="loanCurrencySymbol" class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+            <input type="number" id="loanAmountInput" value="300000" min="0" max="1500000" step="5000" class="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-sm outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+          <input type="range" id="loanAmountSlider" min="0" max="1500000" step="5000" value="300000" class="w-full">
+        </div>
+
+        <div class="space-y-1.5 md:col-span-1">
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">Currency</label>
+          <select id="currencySelect" class="w-full py-2 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-sm outline-none focus:ring-2 focus:ring-brand-500">
+            <option value="USD" selected>US Dollar (USD)</option>
+            <option value="EUR">Euro (EUR)</option>
+            <option value="GBP">Pound Sterling (GBP)</option>
+          </select>
+        </div>
+
+        <!-- Total Amortization Term & Balance Horizon Selector -->
+        <div class="space-y-1.5 md:col-span-1">
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">Total Loan Amortization</label>
+          <select id="totalTermSelect" class="w-full py-2 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-sm outline-none focus:ring-2 focus:ring-brand-500">
+            <option value="15">15 Years</option>
+            <option value="20">20 Years</option>
+            <option value="25" selected>25 Years</option>
+            <option value="30">30 Years</option>
+            <option value="35">35 Years</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side-by-Side Scenario Configuration Grid -->
+    <div id="scenarioGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+      <!-- SCENARIO A -->
+      <div id="cardScenarioA" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border-2 border-brand-500/40 dark:border-brand-500/30 space-y-5 relative">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-brand-500"></span>
+            <h2 class="font-bold text-base text-slate-800 dark:text-slate-100">Scenario A</h2>
+          </div>
+          <span class="text-xs font-semibold text-slate-400">Agreement 1</span>
+        </div>
+
+        <!-- Lock Extra Payments Toggle -->
+        <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/60">
+          <div>
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Lock Extra Payments in Fixed Period</span>
+            <p class="text-[11px] text-slate-400">Disallow overpayments during fixed term</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="lockExtraA" class="sr-only peer">
+            <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-slate-600 peer-checked:bg-brand-500"></div>
+          </label>
+        </div>
+
+        <!-- Fixed Lock Period Selection -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">Fixed Rate Term</label>
+          <div class="grid grid-cols-5 gap-1.5" id="fixedPeriodBtnsA">
+            <button class="lock-btn-a p-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition" data-years="0">0 Yr</button>
+            <button class="lock-btn-a p-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition" data-years="3">3 Yr</button>
+            <button class="lock-btn-a p-2 text-xs font-bold rounded-xl border bg-brand-500 text-white border-brand-500 transition" data-years="5">5 Yr</button>
+            <button class="lock-btn-a p-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition" data-years="10">10 Yr</button>
+            <button class="lock-btn-a p-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition" data-years="25">25 Yr</button>
+          </div>
+        </div>
+
+        <!-- Rates -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-1.5" id="fixedRateContainerA">
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">Fixed Interest Rate</label>
+            <div class="relative">
+              <input type="number" id="fixedRateA" value="4.50" min="0" max="25" step="0.05" class="w-full pl-3 pr-7 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm outline-none focus:ring-2 focus:ring-brand-500">
+              <span class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 text-xs">%</span>
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">Reversion/Variable Rate</label>
+            <div class="relative">
+              <input type="number" id="varRateA" value="6.00" min="0" max="25" step="0.05" class="w-full pl-3 pr-7 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm outline-none focus:ring-2 focus:ring-brand-500">
+              <span class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 text-xs">%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Extra Contributions -->
+        <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-700/60">
+          <div class="space-y-1">
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 flex justify-between">
+              <span>Extra Contribution</span>
+              <span id="extraMonthlyValA" class="text-brand-600 dark:text-brand-400 font-bold">$0/mo</span>
+            </label>
+            <select id="extraFrequencyA" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500">
+              <option value="monthly">Monthly</option>
+              <option value="biweekly">Every 2 weeks</option>
+              <option value="weekly">Weekly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="annually">Annually</option>
+            </select>
+            <input type="range" id="extraMonthlySliderA" min="0" max="3000" step="50" value="0" class="w-full">
+          </div>
+
+          <!-- Lump Sum Payments List A -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-semibold text-slate-500 dark:text-slate-400">One-Time Lump Sum Payments</label>
+              <button id="addLumpBtnA" class="text-[11px] font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
+                <i class="fa-solid fa-plus text-[10px]"></i> Add Lump Sum
+              </button>
+            </div>
+            <div id="lumpListA" class="space-y-2 max-h-40 overflow-y-auto pr-1">
+              <!-- Dynamically Populated Lump Sum Rows -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Scenario A Key Monthly Payments Summary Card -->
+        <div class="bg-slate-50 dark:bg-slate-900/80 p-4 rounded-xl border border-slate-200/80 dark:border-slate-700/70 space-y-2">
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Scenario A Monthly Breakdown</span>
+          <div class="grid grid-cols-2 gap-3 pt-1">
+            <div class="bg-white dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200/60 dark:border-slate-700">
+              <span class="block text-[10px] text-slate-400 font-semibold uppercase">Fixed Period Payment</span>
+              <span id="summaryPmtFixedA" class="text-base font-black font-mono text-brand-600 dark:text-brand-400">$1,667/mo</span>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200/60 dark:border-slate-700">
+              <span class="block text-[10px] text-slate-400 font-semibold uppercase">Variable Period Payment</span>
+              <span id="summaryPmtVarA" class="text-base font-black font-mono text-slate-700 dark:text-slate-200">$1,842/mo</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SCENARIO B -->
+      <div id="cardScenarioB" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border-2 border-blue-500/40 dark:border-blue-500/30 space-y-5 relative">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+            <h2 class="font-bold text-base text-slate-800 dark:text-slate-100">Scenario B</h2>
+          </div>
+          <span class="text-xs font-semibold text-slate-400">Agreement 2</span>
+        </div>
+
+        <!-- Lock Extra Payments Toggle -->
+        <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/60">
+          <div>
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Lock Extra Payments in Fixed Period</span>
+            <p class="text-[11px] text-slate-400">Disallow overpayments during fixed term</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="lockExtraB" class="sr-only peer">
+            <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-slate-600 peer-checked:bg-blue-500"></div>
+          </label>
+        </div>
+
+        <!-- Fixed Lock Period Selection -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">Fixed Rate Term</label>
+          <div class="grid grid-cols-5 gap-1.5" id="fixedPeriodBtnsB">
+            <button class="lock-btn-b p-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 transition" data-years="0">0 Yr</button>
+            <button class="lock-btn-b p-2 text-xs font-bold rounded-xl border bg-blue-500 text-white border-blue-500 transition" data-years="3">3 Yr</button>
+            <button class="lock-btn-b p-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 transition" data-years="5">5 Yr</button>
+            <button class="lock-btn-b p-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 transition" data-years="10">10 Yr</button>
+            <button class="lock-btn-b p-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 transition" data-years="25">25 Yr</button>
+          </div>
+        </div>
+
+        <!-- Rates -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-1.5" id="fixedRateContainerB">
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">Fixed Interest Rate</label>
+            <div class="relative">
+              <input type="number" id="fixedRateB" value="5.25" min="0" max="25" step="0.05" class="w-full pl-3 pr-7 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm outline-none focus:ring-2 focus:ring-blue-500">
+              <span class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 text-xs">%</span>
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">Reversion/Variable Rate</label>
+            <div class="relative">
+              <input type="number" id="varRateB" value="5.75" min="0" max="25" step="0.05" class="w-full pl-3 pr-7 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm outline-none focus:ring-2 focus:ring-blue-500">
+              <span class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 text-xs">%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Extra Contributions -->
+        <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-700/60">
+          <div class="space-y-1">
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 flex justify-between">
+              <span>Extra Contribution</span>
+              <span id="extraMonthlyValB" class="text-blue-600 dark:text-blue-400 font-bold">$0/mo</span>
+            </label>
+            <select id="extraFrequencyB" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="monthly">Monthly</option>
+              <option value="biweekly">Every 2 weeks</option>
+              <option value="weekly">Weekly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="annually">Annually</option>
+            </select>
+            <input type="range" id="extraMonthlySliderB" min="0" max="3000" step="50" value="0" class="w-full">
+          </div>
+
+          <!-- Lump Sum Payments List B -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-semibold text-slate-500 dark:text-slate-400">One-Time Lump Sum Payments</label>
+              <button id="addLumpBtnB" class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                <i class="fa-solid fa-plus text-[10px]"></i> Add Lump Sum
+              </button>
+            </div>
+            <div id="lumpListB" class="space-y-2 max-h-40 overflow-y-auto pr-1">
+              <!-- Dynamically Populated Lump Sum Rows -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Scenario B Key Monthly Payments Summary Card -->
+        <div class="bg-slate-50 dark:bg-slate-900/80 p-4 rounded-xl border border-slate-200/80 dark:border-slate-700/70 space-y-2">
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Scenario B Monthly Breakdown</span>
+          <div class="grid grid-cols-2 gap-3 pt-1">
+            <div class="bg-white dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200/60 dark:border-slate-700">
+              <span class="block text-[10px] text-slate-400 font-semibold uppercase">Fixed Period Payment</span>
+              <span id="summaryPmtFixedB" class="text-base font-black font-mono text-blue-600 dark:text-blue-400">$1,798/mo</span>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200/60 dark:border-slate-700">
+              <span class="block text-[10px] text-slate-400 font-semibold uppercase">Variable Period Payment</span>
+              <span id="summaryPmtVarB" class="text-base font-black font-mono text-slate-700 dark:text-slate-200">$1,875/mo</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Side-by-Side Comparison Summary Table -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/80 overflow-hidden">
+      <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 id="dashTitle" class="font-bold text-slate-800 dark:text-slate-100 text-lg">Scenario Comparison Dashboard</h3>
+          <p id="dashSub" class="text-xs text-slate-500 dark:text-slate-400">Direct metrics comparison for Scenario A vs Scenario B</p>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 dark:bg-slate-900/60 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+            <tr>
+              <th class="py-3.5 px-6">Metric</th>
+              <th class="py-3.5 px-6 text-brand-600 dark:text-brand-400">Scenario A</th>
+              <th class="py-3.5 px-6 text-blue-600 dark:text-blue-400 col-scenario-b">Scenario B</th>
+              <th class="py-3.5 px-6 col-scenario-b">Difference / Advantage</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-700/60 text-xs font-medium font-mono">
+            <tr>
+              <td class="py-3 px-6 font-bold text-slate-700 dark:text-slate-300">Initial Fixed Period Payment</td>
+              <td id="tblFixedPmtA" class="py-3 px-6 font-bold text-slate-800 dark:text-slate-100">$0</td>
+              <td id="tblFixedPmtB" class="py-3 px-6 font-bold text-slate-800 dark:text-slate-100 col-scenario-b">$0</td>
+              <td id="tblDiffFixedPmt" class="py-3 px-6 font-semibold col-scenario-b">-</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-6 font-bold text-slate-700 dark:text-slate-300">Reversion/Variable Period Payment</td>
+              <td id="tblVarPmtA" class="py-3 px-6 font-bold text-slate-800 dark:text-slate-100">$0</td>
+              <td id="tblVarPmtB" class="py-3 px-6 font-bold text-slate-800 dark:text-slate-100 col-scenario-b">$0</td>
+              <td id="tblDiffVarPmt" class="py-3 px-6 font-semibold col-scenario-b">-</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-6 font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between gap-2">
+                <span>Remaining Balance</span>
+                <div class="flex items-center gap-1.5 font-normal text-xs">
+                  <span class="text-slate-400">At:</span>
+                  <select id="evalYearSelect" class="py-1 px-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg font-semibold text-xs text-brand-600 dark:text-brand-400 outline-none focus:ring-1 focus:ring-brand-500">
+                    <!-- Populated dynamically based on total term -->
+                  </select>
+                </div>
+              </td>
+              <td id="tblRemA" class="py-3 px-6 font-bold">$0</td>
+              <td id="tblRemB" class="py-3 px-6 font-bold col-scenario-b">$0</td>
+              <td id="tblDiffRem" class="py-3 px-6 font-semibold col-scenario-b">-</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-6 font-bold text-slate-700 dark:text-slate-300">Total Lifetime Interest Paid</td>
+              <td id="tblIntA" class="py-3 px-6 font-bold">$0</td>
+              <td id="tblIntB" class="py-3 px-6 font-bold col-scenario-b">$0</td>
+              <td id="tblDiffInt" class="py-3 px-6 font-semibold col-scenario-b">-</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-6 font-bold text-slate-700 dark:text-slate-300">Interest Saved by Extra Payments</td>
+              <td id="tblInterestSavedA" class="py-3 px-6 font-bold">$0</td>
+              <td id="tblInterestSavedB" class="py-3 px-6 font-bold col-scenario-b">$0</td>
+              <td id="tblDiffInterestSaved" class="py-3 px-6 font-semibold col-scenario-b">-</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-6 font-bold text-slate-700 dark:text-slate-300">Total Mortgage Payments</td>
+              <td id="tblTotalPaidA" class="py-3 px-6 font-bold">$0</td>
+              <td id="tblTotalPaidB" class="py-3 px-6 font-bold col-scenario-b">$0</td>
+              <td id="tblDiffTotalPaid" class="py-3 px-6 font-semibold col-scenario-b">-</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-6 font-bold text-slate-700 dark:text-slate-300">Total Debt Payoff Time</td>
+              <td id="tblTimeA" class="py-3 px-6 font-bold">0 yrs</td>
+              <td id="tblTimeB" class="py-3 px-6 font-bold col-scenario-b">0 yrs</td>
+              <td id="tblDiffTime" class="py-3 px-6 font-semibold col-scenario-b">-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Chart Visualizer -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 class="font-bold text-slate-800 dark:text-slate-100 text-lg">Balance Payoff Trajectory</h3>
+          <p id="chartSubtitle" class="text-xs text-slate-500 dark:text-slate-400">Visualizing loan balance decline</p>
+        </div>
+        <div class="flex items-center gap-4 text-xs font-semibold">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-brand-500"></span>
+            <span>Scenario A</span>
+          </div>
+          <div class="flex items-center gap-2 col-scenario-b">
+            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+            <span>Scenario B</span>
+          </div>
+        </div>
+      </div>
+      <div class="relative h-80 w-full">
+        <canvas id="payoffChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Amortization Annual Schedule Breakdown Table -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/80 overflow-hidden">
+      <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base">Annual Milestone Breakdown Table</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Comparing rate periods, monthly payments, and balances year by year</p>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 dark:bg-slate-900/60 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+            <tr>
+              <th class="py-3 px-4">Timeline</th>
+              <th class="py-3 px-4 text-brand-600 dark:text-brand-400">A: Rate & Status</th>
+              <th class="py-3 px-4 text-brand-600 dark:text-brand-400">A: Monthly Payment</th>
+              <th class="py-3 px-4 text-brand-600 dark:text-brand-400">A: Lump Sum</th>
+              <th class="py-3 px-4 text-brand-600 dark:text-brand-400">A: Remaining Bal</th>
+              <th class="py-3 px-4 text-blue-600 dark:text-blue-400 col-scenario-b">B: Rate & Status</th>
+              <th class="py-3 px-4 text-blue-600 dark:text-blue-400 col-scenario-b">B: Monthly Payment</th>
+              <th class="py-3 px-4 text-blue-600 dark:text-blue-400 col-scenario-b">B: Lump Sum</th>
+              <th class="py-3 px-4 text-blue-600 dark:text-blue-400 col-scenario-b">B: Remaining Bal</th>
+            </tr>
+          </thead>
+          <tbody id="annualBreakdownTable" class="divide-y divide-slate-200 dark:divide-slate-700/60 text-xs font-medium font-mono">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // --- State ---
+    let fixedYearsA = 5;
+    let fixedYearsB = 3;
+    let lumpSumsA = [{ id: 1, amount: 0, month: 12 }];
+    let lumpSumsB = [{ id: 1, amount: 0, month: 12 }];
+    let payoffChart = null;
+
+    // --- Helper Functions ---
+    const currencySettings = {
+      USD: { locale: 'en-US', symbol: '$' },
+      EUR: { locale: 'de-DE', symbol: '€' },
+      GBP: { locale: 'en-GB', symbol: '£' }
+    };
+
+    function fmtCurr(val) {
+      const currency = document.getElementById('currencySelect')?.value || 'USD';
+      const settings = currencySettings[currency];
+      return new Intl.NumberFormat(settings.locale, {
+        style: 'currency', currency, maximumFractionDigits: 0
+      }).format(val || 0);
+    }
+
+    function updateCurrencySymbols() {
+      const currency = document.getElementById('currencySelect').value;
+      const symbol = currencySettings[currency].symbol;
+      document.getElementById('loanCurrencySymbol').textContent = symbol;
+      document.querySelectorAll('.lumpCurrencySymbol').forEach(el => {
+        el.textContent = symbol;
+      });
+    }
+
+    function calcMonthlyPayment(principal, annualRate, totalMonths) {
+      if (principal <= 0 || totalMonths <= 0) return 0;
+      if (annualRate <= 0) return principal / totalMonths;
+      const r = annualRate / 100 / 12;
+      return (principal * r * Math.pow(1 + r, totalMonths)) / (Math.pow(1 + r, totalMonths) - 1);
+    }
+
+    function frequencyMonthlyFactor(frequency) {
+      return { monthly: 1, biweekly: 26 / 12, weekly: 52 / 12, quarterly: 1 / 3, annually: 1 / 12 }[frequency] || 1;
+    }
+
+    function formatExtraContribution(slider, frequency, output) {
+      const amount = parseFloat(slider.value) || 0;
+      const labels = { monthly: '/mo', biweekly: '/2 wks', weekly: '/wk', quarterly: '/qtr', annually: '/yr' };
+      output.textContent = fmtCurr(amount) + (labels[frequency] || '/mo');
+    }
+
+    function setFixedTermButton(selector, activeYears, activeBgClass) {
+      document.querySelectorAll(selector).forEach(btn => {
+        const yrs = parseInt(btn.dataset.years);
+        if (yrs === activeYears) {
+          btn.className = `lock-btn-${selector.includes('BtnsA') ? 'a' : 'b'} p-2 text-xs font-bold rounded-xl border ${activeBgClass} text-white border-transparent transition`;
+        } else {
+          btn.className = `lock-btn-${selector.includes('BtnsA') ? 'a' : 'b'} p-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-400 transition`;
+        }
+      });
+    }
+
+    function updateFixedTermOptions() {
+      const totalYears = parseInt(totalTermSelect.value) || 25;
+
+      [
+        { selector: '#fixedPeriodBtnsA .lock-btn-a', current: () => fixedYearsA, set: value => { fixedYearsA = value; }, bg: 'bg-brand-500', rateContainer: 'fixedRateContainerA' },
+        { selector: '#fixedPeriodBtnsB .lock-btn-b', current: () => fixedYearsB, set: value => { fixedYearsB = value; }, bg: 'bg-blue-500', rateContainer: 'fixedRateContainerB' }
+      ].forEach(group => {
+        const buttons = Array.from(document.querySelectorAll(group.selector));
+        const validYears = buttons.map(btn => parseInt(btn.dataset.years)).filter(years => years <= totalYears);
+        const current = group.current();
+        const selected = validYears.includes(current) ? current : Math.max(...validYears);
+        group.set(selected);
+
+        setFixedTermButton(group.selector, selected, group.bg);
+        buttons.forEach(btn => {
+          const disabled = parseInt(btn.dataset.years) > totalYears;
+          btn.disabled = disabled;
+          btn.classList.toggle('opacity-40', disabled);
+          btn.classList.toggle('cursor-not-allowed', disabled);
+        });
+        const rateContainer = document.getElementById(group.rateContainer);
+        rateContainer.classList.toggle('opacity-40', selected === 0);
+        rateContainer.classList.toggle('pointer-events-none', selected === 0);
+      });
+    }
+
+    function renderLumpList(lumpList, containerId, scenarioKey) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      const maxMonth = (parseInt(totalTermSelect.value) || 25) * 12;
+      
+      if (lumpList.length === 0) {
+        container.innerHTML = '<p class="text-[11px] text-slate-400 italic">No one-time lump sum payments added.</p>';
+        return;
+      }
+
+      lumpList.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-200/80 dark:border-slate-700/60';
+        row.innerHTML = `
+          <div class="relative flex-1">
+            <span class="lumpCurrencySymbol absolute inset-y-0 left-0 pl-2 flex items-center text-slate-400 text-xs">$</span>
+            <input type="number" value="${item.amount}" min="0" step="1000" data-id="${item.id}" class="lump-amt-${scenarioKey} w-full pl-5 pr-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold outline-none focus:ring-1 focus:ring-brand-500">
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-[10px] text-slate-400 font-medium">Mo</span>
+            <input type="number" value="${Math.min(item.month, maxMonth)}" min="1" max="${maxMonth}" data-id="${item.id}" class="lump-mo-${scenarioKey} w-16 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold outline-none focus:ring-1 focus:ring-brand-500">
+          </div>
+          <button data-id="${item.id}" class="del-lump-${scenarioKey} text-rose-500 hover:text-rose-700 p-1">
+            <i class="fa-solid fa-trash text-xs"></i>
+          </button>
+        `;
+        container.appendChild(row);
+      });
+
+      // Attach event listeners for updates & deletes
+      container.querySelectorAll(`.lump-amt-${scenarioKey}`).forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const id = parseInt(e.target.dataset.id);
+          const lump = lumpList.find(l => l.id === id);
+          if (lump) lump.amount = parseFloat(e.target.value) || 0;
+          runSimulation();
+        });
+      });
+
+      container.querySelectorAll(`.lump-mo-${scenarioKey}`).forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const id = parseInt(e.target.dataset.id);
+          const lump = lumpList.find(l => l.id === id);
+          if (lump) lump.month = parseInt(e.target.value) || 1;
+          runSimulation();
+        });
+      });
+
+      container.querySelectorAll(`.del-lump-${scenarioKey}`).forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = parseInt(btn.dataset.id);
+          const idx = lumpList.findIndex(l => l.id === id);
+          if (idx !== -1) lumpList.splice(idx, 1);
+          renderLumpList(lumpList, containerId, scenarioKey);
+          runSimulation();
+        });
+      });
+    }
+
+    function simulateScenario(config) {
+      const { principal, totalYears, fixedYears, rateFixed, rateVar, extraAmount, extraFrequency, lumpSums, lockExtraFixed } = config;
+      const extraMo = extraAmount * frequencyMonthlyFactor(extraFrequency);
+      const totalMonths = totalYears * 12;
+      const fixedMonths = fixedYears * 12;
+
+      let currentBalance = principal;
+      let totalInterest = 0;
+      let actualPayoffMonth = totalMonths;
+      
+      const balances = [principal];
+
+      const pmtFixedInitial = fixedMonths > 0
+        ? calcMonthlyPayment(principal, rateFixed, totalMonths)
+        : 0;
+      let pmtVarReversion = pmtFixedInitial;
+
+      let currentMonthlyPmt = pmtFixedInitial;
+
+      for (let m = 1; m <= totalMonths; m++) {
+        if (currentBalance <= 0) {
+          if (actualPayoffMonth === totalMonths) actualPayoffMonth = m - 1;
+          if (m % 12 === 0) balances.push(0);
+          continue;
+        }
+
+        const isFixedPeriod = fixedMonths > 0 && m <= fixedMonths;
+        const currentRate = isFixedPeriod ? rateFixed : rateVar;
+
+        // Transition month to variable period: Recalculate scheduled monthly payment based on remaining principal
+        if (fixedMonths > 0 && m === fixedMonths + 1) {
+          const remainingTermMonths = totalMonths - fixedMonths;
+          pmtVarReversion = calcMonthlyPayment(currentBalance, rateVar, remainingTermMonths);
+          currentMonthlyPmt = pmtVarReversion;
+        } else if (fixedMonths === 0 && m === 1) {
+          pmtVarReversion = calcMonthlyPayment(principal, rateVar, totalMonths);
+          currentMonthlyPmt = pmtVarReversion;
+        }
+
+        const monthlyRate = currentRate / 100 / 12;
+        const monthlyInterest = currentBalance * monthlyRate;
+        totalInterest += monthlyInterest;
+
+        let scheduledPrincipalPmt = Math.min(currentBalance, currentMonthlyPmt - monthlyInterest);
+        if (scheduledPrincipalPmt < 0) scheduledPrincipalPmt = 0;
+
+        currentBalance -= scheduledPrincipalPmt;
+
+        // Apply Extra Monthly Cash & One-Time Lump Sums if not locked
+        let extraPayment = 0;
+        if (!isFixedPeriod || !lockExtraFixed) {
+          extraPayment += extraMo;
+          const matchedLumps = lumpSums.filter(l => l.month === m);
+          matchedLumps.forEach(l => { extraPayment += (l.amount || 0); });
+        }
+
+        if (extraPayment > 0 && currentBalance > 0) {
+          const actualExtra = Math.min(currentBalance, extraPayment);
+          currentBalance -= actualExtra;
+        }
+
+        if (currentBalance <= 0 && actualPayoffMonth === totalMonths) {
+          actualPayoffMonth = m;
+          currentBalance = 0;
+        }
+
+        if (m % 12 === 0) {
+          balances.push(Math.max(0, currentBalance));
+        }
+      }
+
+      return {
+        pmtFixedInitial,
+        pmtVarReversion,
+        balances,
+        totalInterest,
+        totalPaid: principal + totalInterest,
+        actualPayoffMonth
+      };
+    }
+
+    // --- DOM Elements ---
+    const enableScenarioB = document.getElementById('enableScenarioB');
+    const cardScenarioB = document.getElementById('cardScenarioB');
+    const scenarioGrid = document.getElementById('scenarioGrid');
+
+    const loanAmountInput = document.getElementById('loanAmountInput');
+    const loanAmountSlider = document.getElementById('loanAmountSlider');
+    const loanAmountVal = document.getElementById('loanAmountVal');
+
+    const totalTermSelect = document.getElementById('totalTermSelect');
+    const evalYearSelect = document.getElementById('evalYearSelect');
+    const chartSubtitle = document.getElementById('chartSubtitle');
+    const currencySelect = document.getElementById('currencySelect');
+
+    const lockExtraA = document.getElementById('lockExtraA');
+    const fixedRateA = document.getElementById('fixedRateA');
+    const varRateA = document.getElementById('varRateA');
+    const extraMonthlySliderA = document.getElementById('extraMonthlySliderA');
+    const extraMonthlyValA = document.getElementById('extraMonthlyValA');
+    const extraFrequencyA = document.getElementById('extraFrequencyA');
+
+    const lockExtraB = document.getElementById('lockExtraB');
+    const fixedRateB = document.getElementById('fixedRateB');
+    const varRateB = document.getElementById('varRateB');
+    const extraMonthlySliderB = document.getElementById('extraMonthlySliderB');
+    const extraMonthlyValB = document.getElementById('extraMonthlyValB');
+    const extraFrequencyB = document.getElementById('extraFrequencyB');
+
+    // Populate Evaluation Year Dropdown based on Total Term
+    function populateEvalYearDropdown() {
+      const totalYears = parseInt(totalTermSelect.value) || 25;
+      const currentSelected = parseInt(evalYearSelect.value) || 5;
+      evalYearSelect.innerHTML = '';
+      
+      for (let y = 1; y <= totalYears; y++) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = `Year ${y}`;
+        if (y === (currentSelected <= totalYears ? currentSelected : 5)) opt.selected = true;
+        evalYearSelect.appendChild(opt);
+      }
+    }
+
+    // Synchronize Loan Amount Input & Slider
+    function updateLoanAmount(val) {
+      const num = Math.min(1500000, Math.max(0, parseFloat(val) || 0));
+      loanAmountInput.value = num;
+      loanAmountSlider.value = num;
+      loanAmountVal.textContent = fmtCurr(num);
+      runSimulation();
+    }
+
+    loanAmountInput.addEventListener('input', (e) => updateLoanAmount(e.target.value));
+    loanAmountSlider.addEventListener('input', (e) => updateLoanAmount(e.target.value));
+
+    // Other Global Input Listeners
+    totalTermSelect.addEventListener('change', () => {
+      populateEvalYearDropdown();
+      updateFixedTermOptions();
+      const maxMonth = (parseInt(totalTermSelect.value) || 25) * 12;
+      lumpSumsA.forEach(lump => { lump.month = Math.min(lump.month, maxMonth); });
+      lumpSumsB.forEach(lump => { lump.month = Math.min(lump.month, maxMonth); });
+      renderLumpList(lumpSumsA, 'lumpListA', 'a');
+      renderLumpList(lumpSumsB, 'lumpListB', 'b');
+      runSimulation();
+    });
+    evalYearSelect.addEventListener('change', runSimulation);
+    currencySelect.addEventListener('change', () => {
+      updateCurrencySymbols();
+      runSimulation();
+    });
+
+    // Rate & Extra Cash Event Listeners
+    fixedRateA.addEventListener('input', runSimulation);
+    varRateA.addEventListener('input', runSimulation);
+    lockExtraA.addEventListener('change', runSimulation);
+    extraMonthlySliderA.addEventListener('input', () => {
+      formatExtraContribution(extraMonthlySliderA, extraFrequencyA.value, extraMonthlyValA);
+      runSimulation();
+    });
+    extraFrequencyA.addEventListener('change', () => { formatExtraContribution(extraMonthlySliderA, extraFrequencyA.value, extraMonthlyValA); runSimulation(); });
+
+    fixedRateB.addEventListener('input', runSimulation);
+    varRateB.addEventListener('input', runSimulation);
+    lockExtraB.addEventListener('change', runSimulation);
+    extraMonthlySliderB.addEventListener('input', () => {
+      formatExtraContribution(extraMonthlySliderB, extraFrequencyB.value, extraMonthlyValB);
+      runSimulation();
+    });
+    extraFrequencyB.addEventListener('change', () => { formatExtraContribution(extraMonthlySliderB, extraFrequencyB.value, extraMonthlyValB); runSimulation(); });
+
+    // Toggle Scenario B Visibility
+    enableScenarioB.addEventListener('change', () => {
+      const isBActive = enableScenarioB.checked;
+      if (isBActive) {
+        cardScenarioB.classList.remove('hidden');
+        scenarioGrid.classList.add('lg:grid-cols-2');
+        document.querySelectorAll('.col-scenario-b').forEach(el => el.classList.remove('hidden'));
+        document.getElementById('dashTitle').textContent = 'Scenario Comparison Dashboard';
+        document.getElementById('dashSub').textContent = 'Direct metrics comparison for Scenario A vs Scenario B';
+      } else {
+        cardScenarioB.classList.add('hidden');
+        scenarioGrid.classList.remove('lg:grid-cols-2');
+        document.querySelectorAll('.col-scenario-b').forEach(el => el.classList.add('hidden'));
+        document.getElementById('dashTitle').textContent = 'Scenario A Payoff Summary';
+        document.getElementById('dashSub').textContent = 'Overview of Scenario A metrics & payoff timeline';
+      }
+      runSimulation();
+    });
+
+    // Scenario A Events
+    function runSimulation() {
+      const principal = parseFloat(loanAmountInput.value) || 0;
+      const totalYears = parseInt(totalTermSelect.value) || 25;
+      const evalYear = parseInt(evalYearSelect.value) || 5;
+      const isBActive = enableScenarioB.checked;
+
+      // Scenario A Config
+      const resA = simulateScenario({
+        principal,
+        totalYears,
+        fixedYears: fixedYearsA,
+        rateFixed: parseFloat(fixedRateA.value) || 0,
+        rateVar: parseFloat(varRateA.value) || 0,
+        extraAmount: parseFloat(extraMonthlySliderA.value) || 0,
+        extraFrequency: extraFrequencyA.value,
+        lumpSums: lumpSumsA,
+        lockExtraFixed: lockExtraA.checked
+      });
+      const baselineA = simulateScenario({ principal, totalYears, fixedYears: fixedYearsA,
+        rateFixed: parseFloat(fixedRateA.value) || 0, rateVar: parseFloat(varRateA.value) || 0,
+        extraAmount: 0, extraFrequency: 'monthly', lumpSums: [], lockExtraFixed: false });
+
+      // Scenario B Config
+      let resB = null;
+      if (isBActive) {
+        resB = simulateScenario({
+          principal,
+          totalYears,
+          fixedYears: fixedYearsB,
+          rateFixed: parseFloat(fixedRateB.value) || 0,
+          rateVar: parseFloat(varRateB.value) || 0,
+          extraAmount: parseFloat(extraMonthlySliderB.value) || 0,
+          extraFrequency: extraFrequencyB.value,
+          lumpSums: lumpSumsB,
+          lockExtraFixed: lockExtraB.checked
+        });
+      }
+
+      // Update Card Monthly Payment Labels
+      document.getElementById('summaryPmtFixedA').textContent = fmtCurr(resA.pmtFixedInitial) + '/mo';
+      document.getElementById('summaryPmtVarA').textContent = fmtCurr(resA.pmtVarReversion) + '/mo';
+
+      if (isBActive && resB) {
+        document.getElementById('summaryPmtFixedB').textContent = fmtCurr(resB.pmtFixedInitial) + '/mo';
+        document.getElementById('summaryPmtVarB').textContent = fmtCurr(resB.pmtVarReversion) + '/mo';
+      }
+
+      // Update Comparison Dashboard Table
+      document.getElementById('tblFixedPmtA').textContent = fmtCurr(resA.pmtFixedInitial) + '/mo';
+      document.getElementById('tblVarPmtA').textContent = fmtCurr(resA.pmtVarReversion) + '/mo';
+
+      const remA = resA.balances[evalYear] !== undefined ? resA.balances[evalYear] : 0;
+      document.getElementById('tblRemA').textContent = fmtCurr(remA);
+      document.getElementById('tblIntA').textContent = fmtCurr(resA.totalInterest);
+      const interestSavedA = Math.max(0, baselineA.totalInterest - resA.totalInterest);
+      document.getElementById('tblInterestSavedA').textContent = fmtCurr(interestSavedA);
+      document.getElementById('tblTotalPaidA').textContent = fmtCurr(resA.totalPaid);
+
+      const formatTime = m => `${Math.floor(m / 12)} yrs ${m % 12} mos`;
+      document.getElementById('tblTimeA').textContent = formatTime(resA.actualPayoffMonth);
+
+      if (isBActive && resB) {
+        document.getElementById('tblFixedPmtB').textContent = fmtCurr(resB.pmtFixedInitial) + '/mo';
+        const diffFixed = resA.pmtFixedInitial - resB.pmtFixedInitial;
+        document.getElementById('tblDiffFixedPmt').textContent = diffFixed < 0 
+          ? `Scenario A saves ${fmtCurr(Math.abs(diffFixed))}/mo` 
+          : diffFixed > 0 ? `Scenario B saves ${fmtCurr(diffFixed)}/mo` : 'Equal';
+
+        document.getElementById('tblVarPmtB').textContent = fmtCurr(resB.pmtVarReversion) + '/mo';
+        const diffVar = resA.pmtVarReversion - resB.pmtVarReversion;
+        document.getElementById('tblDiffVarPmt').textContent = diffVar < 0 
+          ? `Scenario A saves ${fmtCurr(Math.abs(diffVar))}/mo` 
+          : diffVar > 0 ? `Scenario B saves ${fmtCurr(diffVar)}/mo` : 'Equal';
+
+        const remB = resB.balances[evalYear] !== undefined ? resB.balances[evalYear] : 0;
+        document.getElementById('tblRemB').textContent = fmtCurr(remB);
+        const diffRem = remA - remB;
+        document.getElementById('tblDiffRem').textContent = diffRem < 0 
+          ? `Scenario A lower by ${fmtCurr(Math.abs(diffRem))}` 
+          : diffRem > 0 ? `Scenario B lower by ${fmtCurr(diffRem)}` : 'Equal';
+
+        document.getElementById('tblIntB').textContent = fmtCurr(resB.totalInterest);
+        const baselineB = simulateScenario({ principal, totalYears, fixedYears: fixedYearsB,
+          rateFixed: parseFloat(fixedRateB.value) || 0, rateVar: parseFloat(varRateB.value) || 0,
+          extraAmount: 0, extraFrequency: 'monthly', lumpSums: [], lockExtraFixed: false });
+        const interestSavedB = Math.max(0, baselineB.totalInterest - resB.totalInterest);
+        document.getElementById('tblInterestSavedB').textContent = fmtCurr(interestSavedB);
+        const diffInterestSaved = interestSavedA - interestSavedB;
+        document.getElementById('tblDiffInterestSaved').textContent = diffInterestSaved > 0
+          ? `Scenario A saves ${fmtCurr(diffInterestSaved)} more interest`
+          : diffInterestSaved < 0 ? `Scenario B saves ${fmtCurr(Math.abs(diffInterestSaved))} more interest` : 'Equal';
+        const diffInt = resA.totalInterest - resB.totalInterest;
+        document.getElementById('tblDiffInt').textContent = diffInt < 0 
+          ? `Scenario A saves ${fmtCurr(Math.abs(diffInt))} total` 
+          : diffInt > 0 ? `Scenario B saves ${fmtCurr(diffInt)} total` : 'Equal';
+
+        document.getElementById('tblTotalPaidB').textContent = fmtCurr(resB.totalPaid);
+        const diffTotalPaid = resA.totalPaid - resB.totalPaid;
+        document.getElementById('tblDiffTotalPaid').textContent = diffTotalPaid < 0
+          ? `Scenario A saves ${fmtCurr(Math.abs(diffTotalPaid))} total`
+          : diffTotalPaid > 0 ? `Scenario B saves ${fmtCurr(diffTotalPaid)} total` : 'Equal';
+
+        document.getElementById('tblTimeB').textContent = formatTime(resB.actualPayoffMonth);
+        const diffTime = resA.actualPayoffMonth - resB.actualPayoffMonth;
+        document.getElementById('tblDiffTime').textContent = diffTime < 0 
+          ? `Scenario A is ${formatTime(Math.abs(diffTime))} faster` 
+          : diffTime > 0 ? `Scenario B is ${formatTime(diffTime)} faster` : 'Equal';
+      }
+      else {
+        document.getElementById('tblInterestSavedB').textContent = '$0';
+      }
+
+      // Update Chart
+      updateChart(totalYears, resA.balances, isBActive && resB ? resB.balances : null);
+
+      // Update Annual Table
+      updateAnnualTable(totalYears, resA, isBActive ? resB : null);
+    }
+
+    function updateChart(totalYears, balancesA, balancesB) {
+      const ctx = document.getElementById('payoffChart').getContext('2d');
+      const labels = Array.from({ length: totalYears + 1 }, (_, i) => i);
+      chartSubtitle.textContent = `Visualizing loan balance decline across ${totalYears} years`;
+
+      const datasets = [
+        {
+          label: 'Scenario A',
+          data: balancesA,
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.1,
+          pointRadius: 3
+        }
+      ];
+
+      if (balancesB) {
+        datasets.push({
+          label: 'Scenario B',
+          data: balancesB,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.1,
+          pointRadius: 3
+        });
+      }
+
+      if (payoffChart) {
+        payoffChart.data.labels = labels;
+        payoffChart.data.datasets = datasets;
+        payoffChart.update();
+      } else {
+        payoffChart = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => `${ctx.dataset.label}: ${fmtCurr(ctx.raw)}`
+                }
+              }
+            },
+            scales: {
+              y: {
+                ticks: { callback: v => '$' + (v / 1000) + 'k' },
+                grid: { color: 'rgba(150, 150, 150, 0.1)' }
+              },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+      }
+    }
+
+    function updateAnnualTable(totalYears, resA, resB) {
+      const tbody = document.getElementById('annualBreakdownTable');
+      tbody.innerHTML = '';
+      const isBActive = !!resB;
+
+      const milestones = Array.from({ length: totalYears }, (_, i) => i + 1);
+
+      milestones.forEach(y => {
+        const isFixedA = (fixedYearsA > 0 && y <= fixedYearsA);
+        const rateA = isFixedA ? (parseFloat(fixedRateA.value) || 0) : (parseFloat(varRateA.value) || 0);
+        const pmtA = isFixedA ? resA.pmtFixedInitial : resA.pmtVarReversion;
+        const balA = resA.balances[y] !== undefined ? resA.balances[y] : 0;
+        const lumpA = lumpSumsA.filter(l => l.month > (y - 1) * 12 && l.month <= y * 12)
+          .reduce((sum, l) => sum + (l.amount || 0), 0);
+
+        let colBHtml = '';
+        if (isBActive && resB) {
+          const isFixedB = (fixedYearsB > 0 && y <= fixedYearsB);
+          const rateB = isFixedB ? (parseFloat(fixedRateB.value) || 0) : (parseFloat(varRateB.value) || 0);
+          const pmtB = isFixedB ? resB.pmtFixedInitial : resB.pmtVarReversion;
+          const balB = resB.balances[y] !== undefined ? resB.balances[y] : 0;
+          const lumpB = lumpSumsB.filter(l => l.month > (y - 1) * 12 && l.month <= y * 12)
+            .reduce((sum, l) => sum + (l.amount || 0), 0);
+          colBHtml = `
+            <td class="py-3 px-4 col-scenario-b">${rateB.toFixed(2)}% ${isFixedB ? '(Fixed)' : '(Variable)'}</td>
+            <td class="py-3 px-4 text-blue-600 font-semibold col-scenario-b">${fmtCurr(pmtB)}/mo</td>
+            <td class="py-3 px-4 text-blue-600 font-semibold col-scenario-b">${fmtCurr(lumpB)}</td>
+            <td class="py-3 px-4 font-bold col-scenario-b">${fmtCurr(balB)}</td>
+          `;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/50 dark:hover:bg-slate-700/20';
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-200">Year ${y}</td>
+          <td class="py-3 px-4">${rateA.toFixed(2)}% ${isFixedA ? '(Fixed)' : '(Variable)'}</td>
+          <td class="py-3 px-4 text-brand-600 font-semibold">${fmtCurr(pmtA)}/mo</td>
+          <td class="py-3 px-4 text-brand-600 font-semibold">${fmtCurr(lumpA)}</td>
+          <td class="py-3 px-4 font-bold">${fmtCurr(balA)}</td>
+          ${colBHtml}
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Fixed Lock Buttons Setup A
+    document.querySelectorAll('#fixedPeriodBtnsA .lock-btn-a').forEach(btn => {
+      btn.addEventListener('click', () => {
+        fixedYearsA = parseInt(btn.dataset.years);
+        setFixedTermButton('#fixedPeriodBtnsA .lock-btn-a', fixedYearsA, 'bg-brand-500');
+        if (fixedYearsA === 0) {
+          document.getElementById('fixedRateContainerA').classList.add('opacity-40', 'pointer-events-none');
+        } else {
+          document.getElementById('fixedRateContainerA').classList.remove('opacity-40', 'pointer-events-none');
+        }
+        runSimulation();
+      });
+    });
+
+    // Fixed Lock Buttons Setup B
+    document.querySelectorAll('#fixedPeriodBtnsB .lock-btn-b').forEach(btn => {
+      btn.addEventListener('click', () => {
+        fixedYearsB = parseInt(btn.dataset.years);
+        setFixedTermButton('#fixedPeriodBtnsB .lock-btn-b', fixedYearsB, 'bg-blue-500');
+        if (fixedYearsB === 0) {
+          document.getElementById('fixedRateContainerB').classList.add('opacity-40', 'pointer-events-none');
+        } else {
+          document.getElementById('fixedRateContainerB').classList.remove('opacity-40', 'pointer-events-none');
+        }
+        runSimulation();
+      });
+    });
+
+    // Add Lump Sum Buttons
+    document.getElementById('addLumpBtnA').addEventListener('click', () => {
+      lumpSumsA.push({ id: Date.now(), amount: 5000, month: 12 });
+      renderLumpList(lumpSumsA, 'lumpListA', 'a');
+      runSimulation();
+    });
+
+    document.getElementById('addLumpBtnB').addEventListener('click', () => {
+      lumpSumsB.push({ id: Date.now(), amount: 5000, month: 12 });
+      renderLumpList(lumpSumsB, 'lumpListB', 'b');
+      updateCurrencySymbols();
+      runSimulation();
+    });
+
+    // CSV Export
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+      const totalYears = parseInt(totalTermSelect.value);
+      const isBActive = enableScenarioB.checked;
+      
+      let csv = isBActive 
+        ? 'Year,Scenario A Rate,Scenario A Monthly Pmt,Scenario A Balance,Scenario B Rate,Scenario B Monthly Pmt,Scenario B Balance\n'
+        : 'Year,Scenario A Rate,Scenario A Monthly Pmt,Scenario A Balance\n';
+      
+      const resA = simulateScenario({
+        principal: parseFloat(loanAmountInput.value) || 0,
+        totalYears,
+        fixedYears: fixedYearsA,
+        rateFixed: parseFloat(fixedRateA.value) || 0,
+        rateVar: parseFloat(varRateA.value) || 0,
+        extraAmount: parseFloat(extraMonthlySliderA.value) || 0,
+        extraFrequency: extraFrequencyA.value,
+        lumpSums: lumpSumsA,
+        lockExtraFixed: lockExtraA.checked
+      });
+
+      let resB = null;
+      if (isBActive) {
+        resB = simulateScenario({
+          principal: parseFloat(loanAmountInput.value) || 0,
+          totalYears,
+          fixedYears: fixedYearsB,
+          rateFixed: parseFloat(fixedRateB.value) || 0,
+          rateVar: parseFloat(varRateB.value) || 0,
+          extraAmount: parseFloat(extraMonthlySliderB.value) || 0,
+          extraFrequency: extraFrequencyB.value,
+          lumpSums: lumpSumsB,
+          lockExtraFixed: lockExtraB.checked
+        });
+      }
+
+      for (let y = 1; y <= totalYears; y++) {
+        const rateA = (fixedYearsA > 0 && y <= fixedYearsA) ? fixedRateA.value : varRateA.value;
+        const pmtA = (fixedYearsA > 0 && y <= fixedYearsA) ? resA.pmtFixedInitial : resA.pmtVarReversion;
+        const balA = resA.balances[y] || 0;
+
+        if (isBActive && resB) {
+          const rateB = (fixedYearsB > 0 && y <= fixedYearsB) ? fixedRateB.value : varRateB.value;
+          const pmtB = (fixedYearsB > 0 && y <= fixedYearsB) ? resB.pmtFixedInitial : resB.pmtVarReversion;
+          const balB = resB.balances[y] || 0;
+          csv += `${y},${rateA}%,${pmtA.toFixed(2)},${balA.toFixed(2)},${rateB}%,${pmtB.toFixed(2)},${balB.toFixed(2)}\n`;
+        } else {
+          csv += `${y},${rateA}%,${pmtA.toFixed(2)},${balA.toFixed(2)}\n`;
+        }
+      }
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', 'mortgage_payoff_schedule.csv');
+      a.click();
+    });
+
+    // Clear All Inputs Button (Empties payments, resets custom inputs safely)
+    document.getElementById('clearAllBtn').addEventListener('click', () => {
+      loanAmountInput.value = 0;
+      loanAmountSlider.value = 0;
+      loanAmountVal.textContent = '$0';
+
+      extraMonthlySliderA.value = 0;
+      extraFrequencyA.value = 'monthly';
+      formatExtraContribution(extraMonthlySliderA, extraFrequencyA.value, extraMonthlyValA);
+      fixedRateA.value = 0;
+      varRateA.value = 0;
+      lockExtraA.checked = false;
+
+      extraMonthlySliderB.value = 0;
+      extraFrequencyB.value = 'monthly';
+      formatExtraContribution(extraMonthlySliderB, extraFrequencyB.value, extraMonthlyValB);
+      fixedRateB.value = 0;
+      varRateB.value = 0;
+      lockExtraB.checked = false;
+
+      lumpSumsA = [{ id: Date.now(), amount: 0, month: 12 }];
+      lumpSumsB = [{ id: Date.now(), amount: 0, month: 12 }];
+
+      renderLumpList(lumpSumsA, 'lumpListA', 'a');
+      renderLumpList(lumpSumsB, 'lumpListB', 'b');
+      runSimulation();
+    });
+
+    // Theme Toggle
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+
+    // Init
+    window.onload = function() {
+      document.documentElement.classList.add('dark');
+      populateEvalYearDropdown();
+      updateFixedTermOptions();
+      setFixedTermButton('#fixedPeriodBtnsA .lock-btn-a', 5, 'bg-brand-500');
+      setFixedTermButton('#fixedPeriodBtnsB .lock-btn-b', 3, 'bg-blue-500');
+      renderLumpList(lumpSumsA, 'lumpListA', 'a');
+      renderLumpList(lumpSumsB, 'lumpListB', 'b');
+      runSimulation();
+    };
+  </script>
+</body>
+</html>
