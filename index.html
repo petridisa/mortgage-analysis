@@ -554,6 +554,8 @@
       const container = document.getElementById(containerId);
       container.innerHTML = '';
       const maxMonth = (parseInt(totalTermSelect.value) || 25) * 12;
+      const lockExtraFixed = scenarioKey === 'a' ? lockExtraA.checked : lockExtraB.checked;
+      const fixedMonths = (scenarioKey === 'a' ? fixedYearsA : fixedYearsB) * 12;
       
       if (lumpList.length === 0) {
         container.innerHTML = '<p class="text-[11px] text-slate-400 italic">No one-time lump sum payments added.</p>';
@@ -561,16 +563,17 @@
       }
 
       lumpList.forEach(item => {
+        const locked = lockExtraFixed && fixedMonths > 0 && item.month <= fixedMonths;
         const row = document.createElement('div');
-        row.className = 'flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-200/80 dark:border-slate-700/60';
+        row.className = `flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-200/80 dark:border-slate-700/60${locked ? ' opacity-60' : ''}`;
         row.innerHTML = `
           <div class="relative flex-1">
             <span class="lumpCurrencySymbol absolute inset-y-0 left-0 pl-2 flex items-center text-slate-400 text-xs">$</span>
-            <input type="number" value="${item.amount}" min="0" step="1000" data-id="${item.id}" class="lump-amt-${scenarioKey} w-full pl-5 pr-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold outline-none focus:ring-1 focus:ring-brand-500">
+            <input type="number" value="${item.amount}" min="0" step="1000" data-id="${item.id}" ${locked ? 'disabled' : ''} class="lump-amt-${scenarioKey} w-full pl-5 pr-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold outline-none focus:ring-1 focus:ring-brand-500">
           </div>
           <div class="flex items-center gap-1">
             <span class="text-[10px] text-slate-400 font-medium">Mo</span>
-            <input type="number" value="${Math.min(item.month, maxMonth)}" min="1" max="${maxMonth}" data-id="${item.id}" class="lump-mo-${scenarioKey} w-16 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold outline-none focus:ring-1 focus:ring-brand-500">
+            <input type="number" value="${Math.min(item.month, maxMonth)}" min="${lockExtraFixed && fixedMonths > 0 ? fixedMonths + 1 : 1}" max="${maxMonth}" data-id="${item.id}" class="lump-mo-${scenarioKey} w-16 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold outline-none focus:ring-1 focus:ring-brand-500">
           </div>
           <button data-id="${item.id}" class="del-lump-${scenarioKey} text-rose-500 hover:text-rose-700 p-1">
             <i class="fa-solid fa-trash text-xs"></i>
@@ -593,7 +596,13 @@
         inp.addEventListener('input', (e) => {
           const id = parseInt(e.target.dataset.id);
           const lump = lumpList.find(l => l.id === id);
-          if (lump) lump.month = parseInt(e.target.value) || 1;
+          if (lump) {
+            const requestedMonth = parseInt(e.target.value) || 1;
+            lump.month = lockExtraFixed && fixedMonths > 0
+              ? Math.max(fixedMonths + 1, requestedMonth)
+              : requestedMonth;
+          }
+          renderLumpList(lumpList, containerId, scenarioKey);
           runSimulation();
         });
       });
@@ -765,7 +774,10 @@
     // Rate & Extra Cash Event Listeners
     fixedRateA.addEventListener('input', runSimulation);
     varRateA.addEventListener('input', runSimulation);
-    lockExtraA.addEventListener('change', runSimulation);
+    lockExtraA.addEventListener('change', () => {
+      renderLumpList(lumpSumsA, 'lumpListA', 'a');
+      runSimulation();
+    });
     extraMonthlySliderA.addEventListener('input', () => {
       formatExtraContribution(extraMonthlySliderA, extraFrequencyA.value, extraMonthlyValA);
       runSimulation();
@@ -774,7 +786,10 @@
 
     fixedRateB.addEventListener('input', runSimulation);
     varRateB.addEventListener('input', runSimulation);
-    lockExtraB.addEventListener('change', runSimulation);
+    lockExtraB.addEventListener('change', () => {
+      renderLumpList(lumpSumsB, 'lumpListB', 'b');
+      runSimulation();
+    });
     extraMonthlySliderB.addEventListener('input', () => {
       formatExtraContribution(extraMonthlySliderB, extraFrequencyB.value, extraMonthlyValB);
       runSimulation();
@@ -1058,13 +1073,13 @@
 
     // Add Lump Sum Buttons
     document.getElementById('addLumpBtnA').addEventListener('click', () => {
-      lumpSumsA.push({ id: Date.now(), amount: 5000, month: 12 });
+      lumpSumsA.push({ id: Date.now(), amount: 5000, month: lockExtraA.checked && fixedYearsA > 0 ? fixedYearsA * 12 + 1 : 12 });
       renderLumpList(lumpSumsA, 'lumpListA', 'a');
       runSimulation();
     });
 
     document.getElementById('addLumpBtnB').addEventListener('click', () => {
-      lumpSumsB.push({ id: Date.now(), amount: 5000, month: 12 });
+      lumpSumsB.push({ id: Date.now(), amount: 5000, month: lockExtraB.checked && fixedYearsB > 0 ? fixedYearsB * 12 + 1 : 12 });
       renderLumpList(lumpSumsB, 'lumpListB', 'b');
       updateCurrencySymbols();
       runSimulation();
